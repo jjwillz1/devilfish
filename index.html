@@ -4,24 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Holders Live Data</title>
+
+    <style>
+        body {
+            background-color: #121212; /* Almost black */
+            color: white; /* Font color */
+            font-family: Verdana, sans-serif;
+            font-size: 10px;
+            text-align: center; /* Center elements */
+        }
+
+        h1 {
+            font-size: 32px; /* Twice as big */
+            font-weight: bold;
+            margin-bottom: 24px;
+            color: #D32F2F; /* Font color */
+        }
+
+        .table-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 60%; /* Reduce table width */
+            border: 2px solid #8B0000; /* Outer border */
+        }
+
+        th, td {
+            border: 1px solid #8B0000 !important; /* Thin border */
+            padding: 8px;
+            text-align: center;
+            font-size: 14px; /* Row font size */
+        }
+
+        th {
+            background-color: #333; /* Dark gray for headers */
+            font-size: 18px; /* Header font size */
+            font-weight: bold;
+        }
+
+        /* Align first two columns to the right */
+        td:nth-child(1), td:nth-child(2) {
+            text-align: left;
+        }
+
+        /* Center-align the rest */
+        td:nth-child(3), td:nth-child(4), td:nth-child(5) {
+            text-align: center;
+        }
+        
+        td {
+            width: 100px; /* Set column width */
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Add "..." for long text */
+        }
+    </style>
+   
 </head>
 <body>
     
-    <h1>Holders Data</h1>
-    <!-- <pre id="sheetData">Loading...</pre> -->
+    <h1>Holders Live Data</h1>
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Discord Name</th>
-                <th>ClubGG Name</th>
-                <th>NFT Balance</th>
-                <th>NFT Eligible</th>
-                <th>EOM Points</th>
-            </tr>
-        </thead>
-        <tbody id="sheetTableBody"></tbody>
-    </table>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Discord Name</th>
+                    <th>ClubGG Name</th>
+                    <th>NFT Balance</th>
+                    <th>NFT Eligible</th>
+                    <th>EOM Points</th>
+                </tr>
+            </thead>
+            <tbody id="sheetTableBody"></tbody>
+        </table>
+    </div>
 
     
     <script>
@@ -31,9 +92,19 @@
             .then(data => {
                 const tableBody = document.getElementById("sheetTableBody");
                 tableBody.innerHTML = ""; // Clear previous data
+
+            // Sort data by Balance (Column 5, descending) first, then by ClubGG Name (Column 3, ascending)
+            data.sort((a, b) => {
+                // Sort by Balance (Column 5) in descending order
+                if (b[4] !== a[4]) {
+                    return b[4] - a[4]; // Balance descending
+                }
+                // If Balance is the same, sort by ClubGG Name (Column 3) in ascending order
+                return a[2].localeCompare(b[2]); // ClubGG Name ascending
+            });
                 
                 data.forEach(row => {
-                    if (row[4] > 0) { // Column 5 value must be > 0
+                    if (row[4] > 0 && row[1].trim() !== "") { // Balance must be > 0 AND Discord name not empty                        
                         let tr = document.createElement("tr");
                         tr.innerHTML = `
                             <td>${row[1]}</td> <!-- Column 2 -->
@@ -48,7 +119,6 @@
             })
     
                 .catch(error => console.error("Error fetching data:", error));
-        
         }
 
         setInterval(fetchSheetData, 600000); // Refresh data every 10 minutes (600 seconds)
