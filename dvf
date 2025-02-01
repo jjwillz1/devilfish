@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holders Live Data</title>
+</head>
+<body>
+    
+    <h1>Holders Data</h1>
+    <!-- <pre id="sheetData">Loading...</pre> -->
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Discord Name</th>
+                <th>ClubGG Name</th>
+                <th>NFT Balance</th>
+                <th>NFT Eligible</th>
+                <th>EOM Points</th>
+            </tr>
+        </thead>
+        <tbody id="sheetTableBody"></tbody>
+    </table>
+
+    
+    <script>
+        function fetchSheetData() {
+            fetch('https://script.google.com/macros/s/AKfycbxmJ4IirILoB14pWZZhN7OdGkCKTt4Ebja801itVnv9uNYyTnJulNWhdpofAfiS6ERADA/exec')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById("sheetTableBody");
+                tableBody.innerHTML = ""; // Clear previous data
+                
+                data.forEach(row => {
+                    if (row[4] > 0) { // Column 5 value must be > 0
+                        let tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${row[1]}</td> <!-- Column 2 -->
+                            <td>${row[2]}</td> <!-- Column 3 -->
+                            <td>${row[4]}</td> <!-- Column 4 -->
+                            <td>${row[6]}</td> <!-- Column 7 -->
+                            <td>${row[7]}</td> <!-- Column 8 -->
+                        `;
+                        tableBody.appendChild(tr);
+                    }
+                });
+            })
+    
+                .catch(error => console.error("Error fetching data:", error));
+        
+        }
+
+        setInterval(fetchSheetData, 600000); // Refresh data every 10 minutes (600 seconds)
+        fetchSheetData(); // Initial call
+        
+    </script>
+</body>
+</html>
