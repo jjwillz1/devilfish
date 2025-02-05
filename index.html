@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,71 +7,113 @@
     <title>Holders Live Data</title>
 
     <style>
-        body {
-            background-color: #121212; /* Almost black */
-            color: white; /* Font color */
-            font-family: Verdana, sans-serif;
-            font-size: 10px;
-            text-align: center; /* Center elements */
-        }
 
-        h1 {
-            font-size: 32px; /* Twice as big */
-            font-weight: bold;
-            margin-bottom: 24px;
-            color: #D32F2F; /* Font color */
-        }
+    body {
+        background-color: #121212; /* Almost black */
+        color: white; /* Font color */
+        font-family: Verdana, sans-serif;
+        font-size: 10px;
+        text-align: center; /* Center elements */
+        margin: 0; /* Remove default margins */
+        padding: 0; /* Remove default padding */
+    }
+    
+    h1 {
+        font-size: 32px; /* Twice as big */
+        font-weight: bold;
+        margin-bottom: 24px;
+        color: #D32F2F; /* Font color */
+    }
 
-        .table-container {
-            display: flex;
-            justify-content: center;
-        }
 
-        table {
-            border-collapse: collapse;
-            width: 60%; /* Reduce table width */
-            border: 2px solid #8B0000; /* Outer border */
-        }
+        
+    .table-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Align tables at the top */
+        flex-direction: column;
+        gap: 20px; /* Space between tables */
+        padding: 20px; /* Add padding around the tables */
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 80%; /* Adjust width as necessary */
+        border: 2px solid #8B0000; /* Outer border */
+        margin: 0 auto; /* Center the tables horizontally */
+    }
+    
+    th, td {
+        border: 1px solid #8B0000 !important; /* Thin border */
+        padding: 8px;
+        text-align: center;
+        font-size: 14px; /* Row font size */
+    }
+    
+    th {
+        background-color: #333; /* Dark gray for headers */
+        font-size: 18px; /* Header font size */
+        font-weight: bold;
+    }
+    
+    /* Align first two columns to the left */
+    td:nth-child(1), td:nth-child(2) {
+        text-align: left;
+    }
+    
+    /* Center-align the rest */
+    td:nth-child(3), td:nth-child(4), td:nth-child(5) {
+        text-align: center;
+    }
+    
+    td {
+        width: 100px; /* Set column width */
+        white-space: nowrap; /* Prevent text wrapping */
+        overflow: hidden;
+        text-overflow: ellipsis; /* Add "..." for long text */
+    }
 
-        th, td {
-            border: 1px solid #8B0000 !important; /* Thin border */
-            padding: 8px;
-            text-align: center;
-            font-size: 14px; /* Row font size */
-        }
-
-        th {
-            background-color: #333; /* Dark gray for headers */
-            font-size: 18px; /* Header font size */
-            font-weight: bold;
-        }
-
-        /* Align first two columns to the right */
-        td:nth-child(1), td:nth-child(2) {
-            text-align: left;
-        }
-
-        /* Center-align the rest */
-        td:nth-child(3), td:nth-child(4), td:nth-child(5) {
-            text-align: center;
+    #holdersTable {
+        width: 60%; /* Table 1 - 60% width */
+        border: 2px solid #8B0000; /* Outer border */
+        margin: 0 auto; /* Center the table horizontally */
         }
         
-        td {
-            width: 100px; /* Set column width */
-            white-space: nowrap; /* Prevent text wrapping */
-            overflow: hidden;
-            text-overflow: ellipsis; /* Add "..." for long text */
-        }
+#lastTxTable {
+    display: none; /* Initially hidden */
+    width: 40%; /* Table 2 width */
+    margin: 20px auto; /* Add margin for spacing and center the table */
+    border: 2px solid #8B0000; /* Optional: Adjust border styling */
+    border-collapse: collapse; /* Ensure borders collapse properly */
+}
+
+#lastTxTable th, #lastTxTable td {
+    padding: 8px;
+    text-align: center; /* Center text in both header and cells */
+    border: 1px solid #8B0000; /* Border for cells */
+}
+
+#lastTxTable td {
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+        
     </style>
    
 </head>
+
+
+
 <body>
-    
-    <h1>Holders Live Data</h1>
-
-
-    <div class="table-container">
-        <table>
+    <div class="container">
+        <h1>Holders Live Data</h1>
+        
+        <p id="navHelp" style="font-size: 12px; font-weight: bold; text-align: center;">-= click any row for details =-</p>
+        
+        <!-- Table 1: Holders -->
+        <table id="holdersTable">
             <thead>
                 <tr>
                     <th>Discord Name</th>
@@ -80,50 +123,193 @@
                     <th>EOM Points</th>
                 </tr>
             </thead>
-            <tbody id="sheetTableBody"></tbody>
+            <tbody></tbody>
         </table>
+
+        <!-- Table 2: Filtered Transactions -->
+        <table id="lastTxTable">
+            <thead>
+                <tr>
+                    <th>NFT ID</th>
+                    <th>Age (Days)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
     </div>
 
-    
     <script>
-        function fetchSheetData() {
-            fetch('https://script.google.com/macros/s/AKfycbxmJ4IirILoB14pWZZhN7OdGkCKTt4Ebja801itVnv9uNYyTnJulNWhdpofAfiS6ERADA/exec')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById("sheetTableBody");
-                tableBody.innerHTML = ""; // Clear previous data
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzmlc_gtEUftnj1mf-uTHeX0FfTHI2-YDf_Q2lDj4aQgO8DrrUU8DLjoK8VTyYij6YUZA/exec"; // Replace with your actual WebApp URL
 
-            // Sort data by Balance (Column 5, descending) first, then by ClubGG Name (Column 3, ascending)
-            data.sort((a, b) => {
-                // Sort by Balance (Column 5) in descending order
-                if (b[4] !== a[4]) {
-                    return b[4] - a[4]; // Balance descending
-                }
-                // If Balance is the same, sort by ClubGG Name (Column 3) in ascending order
-                return a[2].localeCompare(b[2]); // ClubGG Name ascending
-            });
-                
-                data.forEach(row => {
-                    if (row[4] > 0 && row[1].trim() !== "") { // Balance must be > 0 AND Discord name not empty                        
-                        let tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${row[1]}</td> <!-- Column 2 -->
-                            <td>${row[2]}</td> <!-- Column 3 -->
-                            <td>${row[4]}</td> <!-- Column 4 -->
-                            <td>${row[6]}</td> <!-- Column 7 -->
-                            <td>${row[7]}</td> <!-- Column 8 -->
-                        `;
-                        tableBody.appendChild(tr);
-                    }
-                });
-            })
-    
-                .catch(error => console.error("Error fetching data:", error));
+        async function fetchData() {
+            const response = await fetch(WEB_APP_URL);
+            const data = await response.json();
+            return data;
         }
 
-        setInterval(fetchSheetData, 600000); // Refresh data every 10 minutes (600 seconds)
-        fetchSheetData(); // Initial call
+        async function loadTables() {
+            const data = await fetchData();
+            const holdersData = data.holders;
+            const lastTxData = data.lastTx;
+
+            // Display Holders Table (Table 1)
+            const holdersTable = document.getElementById("holdersTable").querySelector("tbody");
+            holdersTable.innerHTML = "";
+
+            holdersData.sort((a, b) => {
+                if (b[4] !== a[4]) return b[4] - a[4]; // Sort by Balance (Descending)
+                return a[2].localeCompare(b[2]); // Then by ClubGG Name (Ascending)
+            });
+
+            holdersData.forEach((row, rowIndex) => {
+                if (row[4] > 0 && row[1].trim() !== "") { // Balance > 0 AND Discord name not empty
+                    let tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row[1]}</td> <!-- Discord Name -->
+                        <td>${row[2]}</td> <!-- ClubGG Name -->
+                        <td>${row[4]}</td> <!-- NFT Balance -->
+                        <td>${row[6]}</td> <!-- NFT Eligible -->
+                        <td>${row[7]}</td> <!-- EOM Points -->
+                    `;
+
+                    tr.dataset.holderKey = row[3]; // Store Column [4] as a data attribute
+                    holdersTable.appendChild(tr);
+                   
+                }
+            });
+
+            console.log("Table 1 Loaded, Adding Click Listeners...");
         
+            // Attach click event to all rows AFTER they are created
+            document.querySelectorAll("#holdersTable tbody tr").forEach(row => {
+                row.addEventListener("click", function () {
+                    let holderKey = this.dataset.holderKey; // Retrieve stored key
+                    console.log(`🖱 Clicked Row v5, Key: ${holderKey}`);
+                    showLastTx(holderKey, lastTxData);
+                });
+            });
+
+            console.log("Click Events Attached");
+            
+        }
+
+
+    function showLastTx(holderKey, lastTxData) {
+
+            // Hide Table 1
+            document.getElementById("holdersTable").style.display = "none"; 
+            // Update navHelp
+            document.getElementById("navHelp").innerText = "-= click any row to switch back to Holders list =-";
+        
+            // Ensure Table 2 is ready to be shown
+            let lastTxTable = document.getElementById("lastTxTable");
+
+            
+        
+            // If Table 2 doesn't exist yet, create it
+            if (!lastTxTable) {
+                
+                // Create Table 2 and set its contents
+
+                const title = document.createElement("h1");
+                title.textContent = "NFT Eligibility";
+                container.appendChild(title); // Append the title to the container
+                
+                lastTxTable = document.createElement("table");
+                lastTxTable.id = "lastTxTable";
+                lastTxTable.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>NFT ID</th>
+                            <th>Age (Days)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                document.querySelector('.container').appendChild(lastTxTable);
+            }
+        
+            // Show Table 2
+            lastTxTable.style.display = "table";
+
+        console.log("🔎 Filtering Transactions for:", holderKey);
+    
+        // Debug: Log LastTX first to verify data
+        console.log("📋 LastTX Data:", lastTxData);
+    
+        let filteredTxs = lastTxData.filter(tx => String(tx[2]) === String(holderKey));
+        filteredTxs = filteredTxs.sort((a, b) => b[5] - a[5]);
+        
+        console.log("✅ Filtered Transactions:", filteredTxs);
+
+        const lastTxTableBody = lastTxTable.querySelector("tbody");
+        lastTxTableBody.innerHTML = ""; // Clear previous rows (Table 2)
+
+        // Populate Table 2 with filtered transactions
+        if (filteredTxs.length === 0) {
+            console.log("⚠️ No matching transactions found.");
+            lastTxTableBody.innerHTML = "<tr><td colspan='2'>No transactions found.</td></tr>";
+        } else {
+            filteredTxs.forEach(tx => {
+                let age = parseFloat(tx[5]).toFixed(2); // Column 6 (Age) rounded to 2 decimals
+                let hasValueInColumn7 = tx[6] !== ""; // Column 7 is NOT empty
+    
+                let status = hasValueInColumn7 
+                    ? (age < 30 ? age : "Listed on OS") 
+                    : age; // If Column 7 is empty, just display Age normally
+    
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${tx[0]}</td> <!-- NFT ID -->
+                    <td>${status}</td> <!-- Age or "Listed on OS" -->
+                `;
+                
+                // Apply green color if Age > 30
+                if (age > 30) {
+                    tr.style.color = "green"; // Change text color to green
+                }
+
+                lastTxTableBody.appendChild(tr);
+            });
+        }
+    
+        console.log("✅ Table 2 Updated");
+
+        console.log("Table 2 Loaded, Adding Click Listeners...");
+        
+        // Attach click event to all rows AFTER they are created
+        document.querySelectorAll("#lastTxTable tbody tr").forEach(row => {
+            row.addEventListener("click", function () {
+                console.log(`🖱 Clicked Row v2`);
+                showHolders();
+            });
+        });
+        
+    }
+
+    function showHolders() {
+        const holdersTable = document.getElementById("holdersTable");
+        if (holdersTable) {
+            holdersTable.style.display = "table"; // Show Table 1
+        }
+    
+        const lastTxTable = document.getElementById("lastTxTable");
+        if (lastTxTable) {
+            lastTxTable.style.display = "none"; // Hide Table 2
+        }
+
+        // Update navHelp
+        document.getElementById("navHelp").innerText = "-= click any row for details =-";
+    }
+        
+        
+    loadTables();
+    
     </script>
 </body>
+
+  
+
+  
 </html>
